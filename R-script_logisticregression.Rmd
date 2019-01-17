@@ -1,0 +1,94 @@
+---
+title: "Homework2"
+author: "Narang,Mandeep"
+date: "11/2/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## installing required Packages
+Here we need dplyr and ggplot packages to wrangle and visualize the dataset.
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(caret)
+```
+Data File is 
+## Reading the data in R from csv file
+```{r}
+Sys_Data<- read.csv("SystemAdministrators.csv")
+```
+
+## View Data
+We can get the Idea about structure and contents of data file:
+
+```{r}
+names(Sys_Data)
+glimpse(Sys_Data)
+head(Sys_Data,10)
+tail(Sys_Data,10)
+```
+
+By running above command we have seen that data has three columns i.e.,"Experience","Training","Completed.task".
+"Completed.task" is a factor with lables (Yes,No)
+
+## Q1:Using ggplot2 package, create a scatter plot of Experience vs. Training using color or symbol to distinguish programmers who completed the task from those who did not complete it. Which predictor(s) appear(s) potentially useful for classifying task completion?
+
+```{r}
+Answer1<- ggplot(Sys_Data , aes(Training,Experience,color  = Completed.task , shape = Completed.task)) + geom_point()
+Answer1
+```
+In the above code a scatter plot is created with name of "Answer1". having "Training" on X-axis and "Experience" on Y-axis using "Completed.task" to distinguish between Yes and No records using Different color and shape for them.
+As we can see in the above Answer1 plot "Experience" is a potential predictor in classifying the "Completed.task"
+field, because as Experience Increases we have more "Yes" in the data and for a lower value of Experience we have more "No" records in the data. But If we have a look on "Training", we can see that for same value of "Training" parameter we have similar records in "Yes" and "No".
+
+##Q2.1Run a logistic regression model with both predictors using the entire dataset as training data. Generate a confusion matrix and answer the following: among those who completed the task, what is the percentage of programmers incorrectly classified as failing to complete the task?
+
+```{r}
+
+logit.reg <- glm(Completed.task ~ ., data = Sys_Data, family = "binomial")
+logit.reg.pred <- predict(logit.reg, Sys_Data, type = "response")
+
+summary(logit.reg)
+
+levels(Sys_Data$Completed.task)<- c(FALSE ,TRUE)
+
+Conf_matrix<-table(logit.reg.pred> 0.5,Sys_Data$Completed.task)
+Conf_matrix
+
+```
+In the Above code:
+Line 52 the model is trained by using entire data.
+line 53 predicted the values values for the same data by trained model.
+line 55 checked the summary of model and found the intercept and coffecicients and we can see that predictor
+        "Training" is not statistically significant.
+Line 56 Created the confusion matrix named "Conf_matrix"    
+ 
+##Q2.2:among those who completed the task, what is the percentage of programmers incorrectly classified as failing to complete the task?
+
+```{r}
+Conf_matrix[1,2]/sum(Conf_matrix[,2])
+```
+In the above confussion matrix we have total 15 "Yes/TRUE" records from the raw data and after predicting from the model, 5 them are classified as "No/FALSE"
+
+##Q3:How much experience must be accumulated by a programmer with 6 training credits before his or her estimated probability of completing the task exceeds 0.6? (Hint: in a logistic regression you can write the left hand-side of the regression equation as the log of odds).
+```{r}
+Find_exp<- function(Training,p,model_logit) {
+EXP<- (log(p/(1-p)) - coef(model_logit)["(Intercept)"] - coef(model_logit)["Training"]*Training)/coef(model_logit)["Experience"]
+return(EXP)
+}
+
+Experience<- Find_exp(6,0.6,logit.reg)
+Experience 
+                                  
+```
+In the above script a funcion has been made named "Find_exp" we can put Training,probability and model_logit to find Experience required.
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
